@@ -1,0 +1,47 @@
+services:
+  nagios:
+    image: jasonrivers/nagios:latest # Se utiliza una imagen comunitaria estable de Nagios Core
+    container_name: nagios_server
+    hostname: nagios_host # Nombre de host dentro de la red Docker
+    ports:
+      - "8080:80" # Se mapea el puerto 80 del contenedor al puerto 8080 de la máquina Windows
+    volumes:
+      - ./nagios_cfg:/opt/nagios/etc/servers # Se monta la carpeta 'nagios_cfg' para las configuraciones personalizadas
+      - ./nagios_cfg/nagios.cfg:/opt/nagios/etc/nagios.cfg  # Monta del archivo de configuración principal de Nagios
+      - nagios_data:/opt/nagios/var # Volumen persistente para logs, historial y datos de Nagios
+    environment:
+      # Variables de entorno para la configuración inicial del usuario administrador de Nagios
+      - NAGIOSADMIN_USER=nagiosadmin
+      - NAGIOSADMIN_PASS=Password123 # ¡Cambiar por una contraseña fuerte!
+    networks:
+      - nagios_network # Se asigna el contenedor a una red Docker definida
+
+  apache1: 
+    image: httpd:latest # Se utiliza la imagen oficial de Apache
+    container_name: apache1
+    hostname: apache1_host # Nombre de host que Nagios usará para comunicarse 
+    ports: 
+      - "8081:80" # Se expone en un puerto diferente para evitar conflictos 
+    networks: 
+      - nagios_network
+
+  apache2: 
+    image: httpd:latest 
+    container_name: apache2 
+    hostname: apache2_host 
+    ports: 
+      - "8082:80" 
+    networks: 
+      - nagios_network
+
+  
+
+volumes:
+  nagios_data: # Se define un volumen con nombre para la persistencia de datos de Nagios
+
+
+networks:
+  nagios_network:
+    driver: bridge # Se define una red tipo bridge para la comunicación entre los contenedores
+    attachable: true
+    external: false
